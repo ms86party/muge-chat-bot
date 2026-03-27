@@ -1,0 +1,87 @@
+"""RAG 엔진 — 질문 의도 감지, 문서 검색, 컨텍스트 빌드
+
+'왜 무계인가' 질문 시 괭생이모자반 자원화 기술을 핵심 근거로 연결한다.
+데이터 우선순위: homepage(1) > news(2) > brochure(3)
+"""
+from dataclasses import dataclass, field
+
+
+PRODUCT_NAMES = ["하늘천", "따지", "해유기1호", "해유기"]
+
+WHY_MUGE_KEYWORDS = [
+    "왜 무계", "왜 선택", "다른 회사", "차별", "강점", "장점",
+    "뭐가 다른", "뭐가 좋", "특별", "경쟁력",
+]
+
+PRODUCT_KEYWORDS = PRODUCT_NAMES + [
+    "제품", "비료", "성분", "N-P-K", "시비", "어디서 사",
+    "가격", "용량", "사용법",
+]
+
+ESG_KEYWORDS = [
+    "ESG", "친환경", "괭생이모자반", "자원화", "해양", "탈염", "열분해",
+]
+
+
+@dataclass
+class Document:
+    content: str
+    source: str = "unknown"
+    tags: list = field(default_factory=list)
+    priority: int = 3
+
+
+class RAGEngine:
+    """키워드 기반 RAG 검색 엔진 (벡터DB 연동 전 프로토타입)"""
+
+    def __init__(self, documents: list = None):
+        self._documents = documents or []
+
+    def add_document(self, doc: Document):
+        self._documents.append(doc)
+
+    def retrieve(self, query: str, top_k: int = 5) -> list:
+        matched = [
+            doc for doc in self._documents
+            if query in doc.content or any(query in tag for tag in doc.tags)
+        ]
+        matched.sort(key=lambda d: d.priority)
+        return matched[:top_k]
+
+    def retrieve_by_tag(self, tag: str) -> list:
+        matched = [doc for doc in self._documents if tag in doc.tags]
+        matched.sort(key=lambda d: d.priority)
+        return matched
+
+    def detect_intent(self, query: str) -> str:
+        if any(kw in query for kw in WHY_MUGE_KEYWORDS):
+            return "why_muge"
+        if any(kw in query for kw in PRODUCT_KEYWORDS):
+            return "product"
+        if any(kw in query for kw in ESG_KEYWORDS):
+            return "esg"
+        return "general"
+
+    def build_context(self, query: str) -> str:
+        intent = self.detect_intent(query)
+
+        if intent == "why_muge":
+            docs = self.retrieve_by_tag("괭생이모자반") + self.retrieve_by_tag("ESG")
+        elif intent == "product":
+            docs = self.retrieve(query) + self.retrieve_by_tag("제품")
+        elif intent == "esg":
+            docs = self.retrieve_by_tag("ESG") + self.retrieve_by_tag("괭생이모자반")
+        else:
+            docs = self.retrieve(query)
+
+        # 중복 제거 및 우선순위 정렬
+        seen = set()
+        unique_docs = []
+        for doc in docs:
+            if id(doc) not in seen:
+                seen.add(id(doc))
+                unique_docs.append(doc)
+        unique_docs.sort(key=lambda d: d.priority)
+
+        lines = [f"[{doc.source}] {doc.content}" for doc in unique_docs]
+        return "\n".join(lines)
