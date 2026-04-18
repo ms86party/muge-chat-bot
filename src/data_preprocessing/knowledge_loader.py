@@ -30,6 +30,21 @@ KNOWLEDGE_SOURCES: list[tuple[str, str, int, list[str]]] = [
 # 청크 최대 글자수 (긴 섹션은 추가 분할)
 CHUNK_MAX_CHARS = 900
 
+# 고객 응대용이 아닌 메타/내부 섹션 헤딩 — RAG 청크에서 제외한다.
+SKIP_HEADING_PATTERNS = [
+    "sitemap", "사이트 구조", "사이트맵", "navigation",
+    "수집 메타데이터", "수집 메모", "engineering notes",
+    "챗봇 rag", "챗봇 응대용", "핵심 셀링 포인트 요약", "핵심 태그 요약",
+    "푸터", "footer", "copyright",
+    "로그인", "회원 관련",
+    "게시판",
+]
+
+
+def _is_skipped_heading(heading: str) -> bool:
+    h = heading.lower()
+    return any(p in h for p in SKIP_HEADING_PATTERNS)
+
 # 공통 태그 추출 키워드
 TAG_KEYWORDS = {
     "하늘천": "제품",
@@ -130,6 +145,8 @@ def load_documents(root: str | os.PathLike | None = None) -> list[Document]:
             except (OSError, UnicodeDecodeError):
                 continue
             for heading, body in _chunk_markdown(raw):
+                if _is_skipped_heading(heading):
+                    continue
                 for piece in _split_long_chunk(body):
                     content = f"[{md_file.stem} > {heading}]\n{piece}"
                     documents.append(Document(
