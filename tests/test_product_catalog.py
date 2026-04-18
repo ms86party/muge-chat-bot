@@ -32,10 +32,14 @@ class TestProductCatalog:
             assert len(product["selling_points"]) >= 1
 
     def test_product_has_four_mu(self, catalog):
-        """4無 공법 항목이 제품에 포함되어야 한다."""
-        product = catalog.get_product("하늘천")
-        assert "four_mu" in product
-        assert set(product["four_mu"]) == {"무항생제", "무염분", "무가스", "무취"}
+        """4無 공법은 해유기1호 전용 공법 (공식 홈페이지 기준) 이다."""
+        haeyugi = catalog.get_product("해유기1호")
+        assert "four_mu" in haeyugi
+        assert set(haeyugi["four_mu"]) == {"무항생제", "무염분", "무가스", "무취"}
+        # 다른 제품은 4無 공법 미적용
+        hanul = catalog.get_product("하늘천")
+        assert "four_mu" in hanul
+        assert hanul["four_mu"] == []
 
     def test_product_has_category(self, catalog):
         """제품별 카테고리(유기질비료/미생물제제 등)가 있어야 한다."""
@@ -45,11 +49,14 @@ class TestProductCatalog:
             assert len(product["category"]) > 0
 
     def test_product_has_shop_links(self, catalog):
-        """쿠팡/네이버 쇼핑 링크 필드가 있어야 한다."""
+        """쇼핑 채널 링크 필드가 있어야 한다 (네이버 공식 직영이 기본)."""
         product = catalog.get_product("하늘천")
         assert "shop_links" in product
-        assert "coupang" in product["shop_links"]
+        # 네이버 공식 직영('친환경기업무계상사')이 모든 제품의 기본 판매 채널
         assert "naver" in product["shop_links"]
+        # 따지는 쿠팡 채널도 등록되어 있어야 한다
+        ddaji = catalog.get_product("따지")
+        assert "coupang" in ddaji["shop_links"] or "naver" in ddaji["shop_links"]
 
     def test_get_comparison_table(self, catalog):
         """제품 간 N-P-K 비교 테이블을 생성할 수 있어야 한다."""

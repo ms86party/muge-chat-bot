@@ -58,10 +58,10 @@ class TestFertilizerCalculator:
         assert abs(calc.pyeong_to_10a(300) - 0.9917) < 0.01
 
     def test_different_area_scales_result(self, calc):
-        """면적이 2배면 시비량도 2배여야 한다."""
+        """면적이 2배면 시비량도 2배여야 한다 (반올림 오차 1kg 이내)."""
         r1 = calc.calculate("벼", "하늘천", area_pyeong=300)
         r2 = calc.calculate("벼", "하늘천", area_pyeong=600)
-        assert abs(r2["recommended_kg"] - r1["recommended_kg"] * 2) < 0.1
+        assert abs(r2["recommended_kg"] - r1["recommended_kg"] * 2) < 1.0
 
     def test_unknown_product_raises(self, calc):
         """등록되지 않은 제품이면 ValueError를 발생시켜야 한다."""

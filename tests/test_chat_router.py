@@ -47,7 +47,7 @@ class TestChatRouter:
         """인사에 브랜드 톤의 인사말을 반환해야 한다."""
         resp = router.handle("안녕하세요")
         assert resp.scenario == "greeting"
-        assert "무계 상사" in resp.message
+        assert "무계상사" in resp.message or "무계 상사" in resp.message
 
     def test_handle_faq_returns_answer(self, router):
         """FAQ 질문에 미리 등록된 답변을 반환해야 한다."""
@@ -63,10 +63,12 @@ class TestChatRouter:
         assert "상담" in resp.message
 
     def test_handle_purchase_includes_link(self, router):
-        """구매 문의에 쇼핑몰 링크 안내가 포함되어야 한다."""
+        """구매 문의에 쇼핑몰/채널 안내가 포함되어야 한다."""
         resp = router.handle("하늘천 구매하고 싶어요")
         assert resp.scenario == "purchase"
-        assert "coupang" in resp.message.lower() or "naver" in resp.message.lower() or "쇼핑" in resp.message
+        msg = resp.message
+        assert ("coupang" in msg.lower() or "naver" in msg.lower()
+                or "쇼핑" in msg or "쿠팡" in msg or "네이버" in msg or "스마트스토어" in msg)
 
     def test_handle_returns_chat_response(self, router):
         """모든 응답이 ChatResponse 객체여야 한다."""

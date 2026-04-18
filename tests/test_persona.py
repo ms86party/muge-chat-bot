@@ -18,7 +18,7 @@ class TestMugePersona:
     def test_system_prompt_contains_brand_identity(self, persona):
         """시스템 프롬프트에 브랜드 정체성 키워드가 포함되어야 한다."""
         prompt = persona.get_system_prompt()
-        assert "무계 상사" in prompt
+        assert "무계상사" in prompt or "무계 상사" in prompt
         assert "기술 전략 실장" in prompt
 
     def test_system_prompt_contains_tone(self, persona):
@@ -50,7 +50,7 @@ class TestMugePersona:
     def test_get_greeting(self, persona):
         """브랜드 톤에 맞는 인사말을 반환해야 한다."""
         greeting = persona.get_greeting()
-        assert "무계 상사" in greeting
+        assert "무계상사" in greeting or "무계 상사" in greeting
         assert len(greeting) > 20
 
     def test_system_prompt_multilingual_mention(self, persona):
